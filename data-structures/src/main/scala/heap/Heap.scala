@@ -1,4 +1,4 @@
-package data_structure.heap
+package heap
 
 trait Heap[T] {
 
