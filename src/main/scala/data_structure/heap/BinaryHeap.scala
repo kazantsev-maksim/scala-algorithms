@@ -5,7 +5,9 @@ import data_structure.heap.BinaryHeap.swap
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
-sealed class BinaryHeap[T](private val capacity: Int)(implicit val ord: Ordering[T]) extends Heap[T] with Serializable {
+final class BinaryHeap[T](private val capacity: Int)(val comparator: (T, T) => Boolean)
+    extends Heap[T]
+    with Serializable {
 
   private val heap = new ArrayBuffer[T](capacity)
 
@@ -20,6 +22,7 @@ sealed class BinaryHeap[T](private val capacity: Int)(implicit val ord: Ordering
       val root = heap(0)
       BinaryHeap.swap(0, size - 1)(heap)
       heap.remove(size - 1, 1)
+      siftDown(0)
       Some(root)
     }
   }
@@ -32,7 +35,7 @@ sealed class BinaryHeap[T](private val capacity: Int)(implicit val ord: Ordering
   @tailrec
   private def siftUp(idx: Int): Unit = {
     val parent = (idx - 1) / 2
-    if (ord.lt(heap(idx), heap(parent))) {
+    if (comparator(heap(idx), heap(parent))) {
       swap(idx, parent)(heap)
       siftUp(parent)
     }
@@ -44,10 +47,10 @@ sealed class BinaryHeap[T](private val capacity: Int)(implicit val ord: Ordering
     val right = left + 1
     if (left < size) {
       var next = left
-      if (right < next && ord.lt(heap(right), heap(left))) {
+      if (right < next && comparator(heap(right), heap(left))) {
         next = right
       }
-      if (ord.lt(heap(next), heap(idx))) {
+      if (comparator(heap(next), heap(idx))) {
         swap(next, idx)(heap)
         siftDown(next)
       }
@@ -59,15 +62,15 @@ object BinaryHeap {
 
   private def swap[T](i: Int, j: Int)(buffer: ArrayBuffer[T]): Unit = {
     val tmp = buffer(i)
-    buffer.updated(i, buffer(j))
-    buffer.updated(j, tmp)
+    buffer(i) = buffer(j)
+    buffer(j) = tmp
   }
 
-  def apply[T](elems: T*)(implicit ord: Ordering[T]): BinaryHeap[T] = {
-    val heap = new BinaryHeap[T](elems.size)
+  def apply[T](elems: T*)(comparator: (T, T) => Boolean): BinaryHeap[T] = {
+    val heap = new BinaryHeap[T](elems.size)(comparator)
     elems.foreach(heap.insert)
     heap
   }
 
-  def apply[T](implicit ord: Ordering[T]): BinaryHeap[T] = new BinaryHeap[T](0)
+  def apply[T](comparator: (T, T) => Boolean): BinaryHeap[T] = new BinaryHeap[T](0)(comparator)
 }
